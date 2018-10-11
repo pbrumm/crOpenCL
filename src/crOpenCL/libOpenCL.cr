@@ -1,6 +1,5 @@
 module CrOpenCL
-
-  @[Link(framework: "OpenCL")]
+  @[Link(lib: "OpenCL")]
   lib LibOpenCL
     # Investigate actual types in OpenCL
     alias Kernel = Void*
