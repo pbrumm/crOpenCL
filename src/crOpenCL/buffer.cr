@@ -13,13 +13,12 @@ module CrOpenCL
   end
 
   class Buffer(T)
-
     @length : UInt64
     @size : UInt64
 
     # If access allows reading, and the buffer has not been copied,
     # it will be copied directly prior to kernel launch on the kernel's command queue
-    def initialize(@context : Context, @access : Memory, *, hostbuf : Array(T)? = nil, length = 0)
+    def initialize(@context : Context, @access : Memory, *, hostbuf : (Array(T) | Slice(T))? = nil, length = 0)
       # Tested this in the playground: even though kind holds the type of the array element
       # typeof is needed for this to work. It correctly gets the size of the type
       @length = (hostbuf.nil? ? length : hostbuf.size).to_u64
@@ -54,8 +53,12 @@ module CrOpenCL
 
     def set(queue : CommandQueue, *, blocking = false, event : Event? = nil, event_wait_list : Array(Event)? = nil)
       raise CLError.new("No host buffer to copy.") if @hostbuf.nil?
-      slice = Slice(T).new(@hostbuf.as(Array(T)).to_unsafe, @hostbuf.as(Array(T)).size)
-      Buffer(T).enqueue_copy(queue, slice, self, slice.size.to_u64, Transfer::ToDevice, blocking: blocking, event: event, event_wait_list: event_wait_list)
+      if @hostbuf.is_a?(Array)
+        slice = Slice(T).new(@hostbuf.as(Array(T)).to_unsafe, @hostbuf.as(Array(T)).size)
+      else
+        slice = @hostbuf
+      end
+      Buffer(T).enqueue_copy(queue, slice.as(Slice(T)), self, slice.as(Slice(T)).size.to_u64, Transfer::ToDevice, blocking: blocking, event: event, event_wait_list: event_wait_list)
     end
 
     def get(queue : CommandQueue, hostbuf : Array(T), *, blocking : Bool, event : Event? = nil, event_wait_list : Array(Event)? = nil)
