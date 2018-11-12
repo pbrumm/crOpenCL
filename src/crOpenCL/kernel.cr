@@ -48,7 +48,7 @@ module CrOpenCL
       event_wait_list ||= Array(Event).new
       ewl_size = event_wait_list.size
       ewl = ewl_size > 0 ? event_wait_list.map(&.to_unsafe_value).to_unsafe : Pointer(Pointer(Void)).null
-      err = LibOpenCL.clEnqueueNDRangeKernel(queue, @kernel, dim, nil, gws, lws, ewl_size, ewl, event)
+      err = LibOpenCL.clEnqueueNDRangeKernel(queue, @kernel, dim, nil, gws, [25_u64], ewl_size, ewl, event)
       raise CLError.new("clEnqueueNDRangeKernel failed.") unless err == LibOpenCL::CL_SUCCESS
     end
 
